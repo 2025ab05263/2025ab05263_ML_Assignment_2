@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
@@ -156,6 +157,22 @@ class ChurnModelTrainer:
         
         return model
 
+    def train_naive_bayes(self):
+        """Train Gaussian Naive Bayes Classifier"""
+        print("\n" + "="*50)
+        print("Training Gaussian Naive Bayes...")
+        print("="*50)
+        
+        model = GaussianNB()
+        
+        model.fit(self.X_train, self.y_train)
+        self.models['Naive Bayes'] = model
+        
+        # Evaluate
+        self._evaluate_model('Naive Bayes', model)
+        
+        return model
+
 
     def train_random_forest(self):
         """Train Random Forest Classifier"""
@@ -213,6 +230,7 @@ class ChurnModelTrainer:
         self.train_logistic_regression()
         self.train_decision_tree()
         self.train_knn() 
+        self.train_naive_bayes()
         self.train_random_forest()
         print("\n" + "="*50)
         print("All models trained successfully!")
