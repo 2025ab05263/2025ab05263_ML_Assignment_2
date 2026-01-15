@@ -6,7 +6,7 @@ import os
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import (
     confusion_matrix, roc_curve, auc, classification_report, accuracy_score,
-    precision_score, recall_score, f1_score
+    precision_score, recall_score, f1_score, matthews_corrcoef
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -388,10 +388,12 @@ def show_combined_interface(model_manager, df):
                         recall = recall_score(y_true, y_pred, zero_division=0)
                         f1 = f1_score(y_true, y_pred, zero_division=0)
                         auc_score = roc_auc_score(y_true, y_proba)
+                        mcc = matthews_corrcoef(y_true, y_pred)
+
                         
                         # Display metrics
                         st.markdown(f"### {model_choice} - Performance Metrics")
-                        col1, col2, col3, col4, col5 = st.columns(5)
+                        col1, col2, col3, col4, col5, col6 = st.columns(6)
                         
                         with col1:
                             st.metric("Accuracy", f"{accuracy:.4f}")
@@ -403,6 +405,8 @@ def show_combined_interface(model_manager, df):
                             st.metric("F1 Score", f"{f1:.4f}")
                         with col5:
                             st.metric("AUC", f"{auc_score:.4f}")
+                        with col6:
+                            st.metric("MCC", f"{mcc:.4f}") 
                         
                         st.markdown("---")
                         

@@ -14,7 +14,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    confusion_matrix, classification_report, roc_auc_score, roc_curve
+    confusion_matrix, classification_report, roc_auc_score, roc_curve, matthews_corrcoef
 )
 import pickle
 import warnings
@@ -190,6 +190,7 @@ class ChurnModelTrainer:
             'recall': recall_score(self.y_test, y_pred, zero_division=0),
             'f1': f1_score(self.y_test, y_pred, zero_division=0),
             'auc': roc_auc_score(self.y_test, y_pred_proba),
+            'mcc': matthews_corrcoef(self.y_test, y_pred),
             'confusion_matrix': confusion_matrix(self.y_test, y_pred),
             'classification_report': classification_report(self.y_test, y_pred),
             'y_pred': y_pred,
@@ -204,6 +205,7 @@ class ChurnModelTrainer:
         print(f"  Recall:    {metrics['recall']:.4f}")
         print(f"  F1 Score:  {metrics['f1']:.4f}")
         print(f"  AUC:       {metrics['auc']:.4f}")
+        print(f"  MCC:       {metrics['mcc']:.4f}")
         print(f"\nClassification Report:\n{metrics['classification_report']}")
     
     def train_all_models(self):
