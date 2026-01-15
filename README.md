@@ -85,6 +85,6 @@ The following six machine learning classification models were implemented and ev
 
 ## Conclusion
 
-The results show that ensemble models such as Random Forest and XGBoost outperform individual classifiers in predicting customer churn. Matthews Correlation Coefficient (MCC) proved to be a robust metric for evaluating performance on imbalanced datasets. The Streamlit application provides an interactive platform for real-time predictions and comparative analysis of model performance.
+
 
 ---
