@@ -1,5 +1,4 @@
 # Customer Churn Prediction - ML Assignment 2
-
 ---
 
 ## a. Problem Statement

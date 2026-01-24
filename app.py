@@ -70,9 +70,8 @@ class PreprocessorPipeline:
             self.label_encoders[col] = le
             X_processed[col] = le.transform(X[col].astype(str))
         
-        # Fit scaler on numeric features
-        if self.numeric_features:
-            self.scaler.fit(X_processed[self.numeric_features])
+        # Fit scaler on ALL features (matching training script behavior)
+        self.scaler.fit(X_processed)
         
         self.is_fitted = True
         return self
@@ -105,9 +104,12 @@ class PreprocessorPipeline:
                     # Handle unseen categories
                     X_processed[col] = 0
         
-        # Scale numeric features
-        if self.numeric_features:
-            X_processed[self.numeric_features] = self.scaler.transform(X_processed[self.numeric_features])
+        # Scale ALL features (matching training script behavior)
+        X_processed = pd.DataFrame(
+            self.scaler.transform(X_processed),
+            columns=X_processed.columns,
+            index=X_processed.index
+        )
         
         return (X_processed, y) if y is not None else X_processed
     
@@ -302,24 +304,29 @@ def show_combined_interface(model_manager, df):
                 preprocessor = model_manager.preprocessor
                 
                 with st.spinner("Making predictions..."):
-                    for idx, row in test_df.iterrows():
-                        feature_dict = {}
-                        for feature in preprocessor.feature_names:
-                            if feature in test_df.columns:
-                                val = row[feature]
-                                if feature in preprocessor.categorical_features:
-                                    try:
-                                        feature_dict[feature] = preprocessor.label_encoders[feature].transform([str(val)])[0]
-                                    except:
-                                        feature_dict[feature] = 0
-                                else:
-                                    feature_dict[feature] = float(val)
-                            else:
-                                feature_dict[feature] = 0
-                        
-                        pred, prob = model_manager.predict(model_choice, feature_dict)
-                        predictions.append(pred)
-                        probabilities.append(prob[1] if prob is not None and len(prob) > 1 else 0)
+                    # Preprocess the entire test dataframe at once
+                    # Remove target column if it exists
+                    churn_cols = [col for col in test_df.columns if 'churn' in col.lower()]
+                    if churn_cols:
+                        X_test = test_df.drop(columns=churn_cols)
+                        y_test = test_df[churn_cols[0]]
+                    else:
+                        X_test = test_df.copy()
+                        y_test = None
+                    
+                    # Transform using preprocessor (this handles encoding AND scaling)
+                    X_test_processed = preprocessor.transform(X_test)
+                    
+                    # Make predictions on all samples
+                    model = model_manager.models[model_choice]
+                    predictions = model.predict(X_test_processed)
+                    
+                    # Get probabilities
+                    try:
+                        probabilities_array = model.predict_proba(X_test_processed)[:, 1]
+                        probabilities = probabilities_array.tolist()
+                    except:
+                        probabilities = [1.0 if p == 1 else 0.0 for p in predictions]
                 
                 results_df = test_df.copy()
                 results_df['Prediction'] = predictions
@@ -435,18 +442,36 @@ def show_combined_interface(model_manager, df):
                             st.pyplot(fig)
                         
                         with col2:
-                            st.markdown("#### ROC Curve")
-                            fpr, tpr, _ = roc_curve(y_true, y_proba)
+                            st.markdown("#### Performance Metrics Bar Chart")
+                            
+                            # Create bar chart of metrics
+                            metrics_data = {
+                                'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'AUC', 'MCC'],
+                                'Score': [accuracy, precision, recall, f1, auc_score, (mcc + 1) / 2]  # Normalize MCC to 0-1 range
+                            }
+                            metrics_df = pd.DataFrame(metrics_data)
                             
                             fig, ax = plt.subplots(figsize=(6, 4))
-                            ax.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {auc_score:.2f})')
-                            ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Classifier')
-                            ax.set_xlim([0.0, 1.0])
-                            ax.set_ylim([0.0, 1.05])
-                            ax.set_xlabel('False Positive Rate')
-                            ax.set_ylabel('True Positive Rate')
-                            ax.set_title(f'ROC Curve - {model_choice}')
-                            ax.legend(loc="lower right")
+                            bars = ax.bar(metrics_df['Metric'], metrics_df['Score'], 
+                                         color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'])
+                            
+                            # Add value labels on top of bars
+                            for i, (metric, score) in enumerate(zip(metrics_df['Metric'], metrics_df['Score'])):
+                                # For MCC, show original value
+                                if metric == 'MCC':
+                                    actual_score = mcc
+                                    ax.text(i, score + 0.02, f'{actual_score:.3f}', 
+                                           ha='center', va='bottom', fontsize=9)
+                                else:
+                                    ax.text(i, score + 0.02, f'{score:.3f}', 
+                                           ha='center', va='bottom', fontsize=9)
+                            
+                            ax.set_ylim([0, 1.15])
+                            ax.set_ylabel('Score')
+                            ax.set_title(f'Performance Metrics - {model_choice}')
+                            ax.grid(axis='y', alpha=0.3)
+                            plt.xticks(rotation=45, ha='right')
+                            plt.tight_layout()
                             st.pyplot(fig)
                     
                     except Exception as e:
