@@ -13,6 +13,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     confusion_matrix, classification_report, roc_auc_score, roc_curve, matthews_corrcoef
@@ -196,6 +197,32 @@ class ChurnModelTrainer:
         
         return model
     
+    def train_xgboost(self):
+        """Train XGBoost Classifier (Ensemble Model)"""
+        print("\n" + "="*50)
+        print("Training XGBoost Classifier...")
+        print("="*50)
+        
+        model = XGBClassifier(
+            n_estimators=200,
+            max_depth=5,
+            learning_rate=0.1,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            objective='binary:logistic',
+            eval_metric='logloss',
+            random_state=42,
+            use_label_encoder=False
+        )
+        
+        model.fit(self.X_train, self.y_train)
+        self.models['XGBoost'] = model
+        
+        # Evaluate
+        self._evaluate_model('XGBoost', model)
+        
+        return model
+
     def _evaluate_model(self, model_name, model):
         """Evaluate model performance"""
         y_pred = model.predict(self.X_test)
@@ -232,6 +259,7 @@ class ChurnModelTrainer:
         self.train_knn() 
         self.train_naive_bayes()
         self.train_random_forest()
+        self.train_xgboost() 
         print("\n" + "="*50)
         print("All models trained successfully!")
         print("="*50)
