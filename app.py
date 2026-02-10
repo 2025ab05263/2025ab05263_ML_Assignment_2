@@ -234,7 +234,7 @@ def main():
 
 def show_combined_interface(model_manager, df):
     """Combined interface for predictions and model performance"""
-    st.markdown("<h2 class='sub-header'>Predictions & Model Performance</h2>", unsafe_allow_html=True)
+    # st.markdown("<h2 class='sub-header'>Predictions & Model Performance</h2>", unsafe_allow_html=True)
     
     if not model_manager.models or not model_manager.preprocessor.feature_names:
         st.error("Models not properly loaded. Please train models first.")
@@ -246,56 +246,110 @@ def show_combined_interface(model_manager, df):
     if 'prediction_results' not in st.session_state:
         st.session_state.prediction_results = None
     
-    # Model selection dropdown
-    model_choice = st.selectbox("Select model for prediction:", list(model_manager.models.keys()))
-    
-    st.write("---")
-    st.write("### Upload Test CSV for Predictions")
-    st.write("Upload a CSV file to make predictions on multiple customers")
-    
-    # Option to load from folder or upload
-    load_option = st.radio("Select data source:", ["Upload CSV File", "Load from Current Folder"], horizontal=True)
-    
-    test_df = None
-    
-    if load_option == "Upload CSV File":
-        uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'], key='batch_upload')
-        if uploaded_file is not None:
-            try:
-                test_df = pd.read_csv(uploaded_file)
-                st.session_state.loaded_test_df = test_df
-            except Exception as e:
-                st.error(f"Error reading uploaded file: {str(e)}")
-    
-    else:  # Load from Current Folder
-        # List CSV files in current directory
-        import os
-        csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
+    # ========== SIDEBAR CONTROLS ==========
+    with st.sidebar:
+        st.markdown("##")
+        st.markdown("---")
         
-        if csv_files:
-            selected_file = st.selectbox("Select a CSV file from current folder:", csv_files)
-            if st.button("Load Selected File", use_container_width=True):
+        # Model selection dropdown
+        st.markdown("### Select Model")
+        model_choice = st.selectbox(
+            "Choose a model for prediction:",
+            list(model_manager.models.keys()),
+            label_visibility="collapsed"
+        )
+        
+        st.markdown("---")
+        st.markdown("### Upload Test Data")
+        
+        # Option to load from folder or upload
+        load_option = st.radio(
+            "Select data source:",
+            ["Upload CSV File", "Load from Current Folder"],
+            label_visibility="collapsed"
+        )
+        
+        test_df = None
+        
+        if load_option == "Upload CSV File":
+            uploaded_file = st.file_uploader(
+                "Choose a CSV file",
+                type=['csv'],
+                key='batch_upload'
+            )
+            if uploaded_file is not None:
                 try:
-                    test_df = pd.read_csv(selected_file)
+                    test_df = pd.read_csv(uploaded_file)
                     st.session_state.loaded_test_df = test_df
-                    st.success(f"Loaded {selected_file}")
+                    st.success(f"Loaded {uploaded_file.name}")
                 except Exception as e:
                     st.error(f"Error reading file: {str(e)}")
+        
+        else:  # Load from Current Folder
+            # List CSV files in current directory
+            import os
+            csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
+            
+            if csv_files:
+                selected_file = st.selectbox(
+                    "Select a CSV file:",
+                    csv_files,
+                    label_visibility="collapsed"
+                )
+                if st.button("📂 Load Selected File", use_container_width=True):
+                    try:
+                        test_df = pd.read_csv(selected_file)
+                        st.session_state.loaded_test_df = test_df
+                        st.success(f"Loaded {selected_file}")
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+            else:
+                st.info("No CSV files found")
+        
+        # Use stored test data if not just loaded
+        if test_df is None and st.session_state.loaded_test_df is not None:
+            test_df = st.session_state.loaded_test_df
+        
+        st.markdown("---")
+        
+        # Download test CSV template option
+        st.markdown("### Download Options")
+        
+        # Option to download loaded test data
+        if test_df is not None:
+            csv_download = test_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Download Loaded Test CSV",
+                data=csv_download,
+                file_name="test_data.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="Download the currently loaded test dataset"
+            )
         else:
-            st.info("No CSV files found in current folder")
+            st.caption("Load data first to enable download")
+        
+        st.markdown("---")
+        
+        # Predict button
+        predict_disabled = test_df is None
+        if st.button(
+            "Predict on Batch Data",
+            use_container_width=True,
+            key="predict_button",
+            disabled=predict_disabled,
+            type="primary"
+        ):
+            st.session_state.run_prediction = True
+        
+        if predict_disabled:
+            st.caption("Upload data first")
     
-    # Use stored test data if not just loaded
-    if test_df is None and st.session_state.loaded_test_df is not None:
-        test_df = st.session_state.loaded_test_df
-    
+    # ========== MAIN AREA - RESULTS ==========
     if test_df is not None:
         try:
             # Store test data in session state for Model Performance tab
             st.session_state.test_data = test_df
-            
-            # Check if we should run predictions
-            if st.button("Predict on Batch Data", use_container_width=True, key="predict_button"):
-                st.session_state.run_prediction = True
             
             if st.session_state.get('run_prediction', False):
                 # Run predictions
@@ -350,42 +404,42 @@ def show_combined_interface(model_manager, df):
                         y_pred = np.array(predictions)
                         y_proba = np.array([p if isinstance(p, (int, float)) else 0 for p in probabilities])
                         
-                        # Comparison Summary: Predicted vs True Values
-                        st.write("### Predicted vs True Values Comparison")
-                        
-                        # Create a dataframe showing true vs predicted values
-                        comparison_df = pd.DataFrame({
-                            'True Target': y_true,
-                            'Predicted Target': y_pred,
-                            'Prediction Probability': y_proba
-                        })
-                        
-                        # Add a column to show if prediction is correct
-                        comparison_df['Match'] = comparison_df['True Target'] == comparison_df['Predicted Target']
-                        comparison_df['Match'] = comparison_df['Match'].apply(lambda x: '✅ Correct' if x else '❌ Incorrect')
-                        
-                        # Display the dataframe
-                        st.dataframe(comparison_df, use_container_width=True)
-                        
-                        # Show summary statistics
-                        st.write("### Summary Statistics")
-                        col1, col2, col3, col4 = st.columns(4)
-                        
-                        true_churn = (y_true == 1).sum()
-                        true_no_churn = (y_true == 0).sum()
-                        pred_churn = (y_pred == 1).sum()
-                        pred_no_churn = (y_pred == 0).sum()
-                        
-                        with col1:
-                            st.metric("True Churns", true_churn)
-                        with col2:
-                            st.metric("True No-Churns", true_no_churn)
-                        with col3:
-                            st.metric("Predicted Churns", pred_churn)
-                        with col4:
-                            st.metric("Predicted No-Churns", pred_no_churn)
-                        
-                        st.markdown("---")
+                        # # Comparison Summary: Predicted vs True Values (COMMENTED OUT)
+                        # st.write("### Predicted vs True Values Comparison")
+                        # 
+                        # # Create a dataframe showing true vs predicted values
+                        # comparison_df = pd.DataFrame({
+                        #     'True Target': y_true,
+                        #     'Predicted Target': y_pred,
+                        #     'Prediction Probability': y_proba
+                        # })
+                        # 
+                        # # Add a column to show if prediction is correct
+                        # comparison_df['Match'] = comparison_df['True Target'] == comparison_df['Predicted Target']
+                        # comparison_df['Match'] = comparison_df['Match'].apply(lambda x: ' Correct' if x else ' Incorrect')
+                        # 
+                        # # Display the dataframe
+                        # st.dataframe(comparison_df, use_container_width=True)
+                        # 
+                        # # Show summary statistics
+                        # st.write("### Summary Statistics")
+                        # col1, col2, col3, col4 = st.columns(4)
+                        # 
+                        # true_churn = (y_true == 1).sum()
+                        # true_no_churn = (y_true == 0).sum()
+                        # pred_churn = (y_pred == 1).sum()
+                        # pred_no_churn = (y_pred == 0).sum()
+                        # 
+                        # with col1:
+                        #     st.metric("True Churns", true_churn)
+                        # with col2:
+                        #     st.metric("True No-Churns", true_no_churn)
+                        # with col3:
+                        #     st.metric("Predicted Churns", pred_churn)
+                        # with col4:
+                        #     st.metric("Predicted No-Churns", pred_no_churn)
+                        # 
+                        # st.markdown("---")
                         
                         # Calculate metrics
                         from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix, classification_report, roc_curve
@@ -419,8 +473,25 @@ def show_combined_interface(model_manager, df):
                         
                         # Classification Report
                         st.markdown(f"### Classification Report - {model_choice}")
-                        report = classification_report(y_true, y_pred, target_names=['No Churn', 'Churn'])
-                        st.code(report, language="text")
+                        
+                        # Get classification report as dictionary for better formatting
+                        report_dict = classification_report(y_true, y_pred, 
+                                                           target_names=['No Churn', 'Churn'],
+                                                           output_dict=True)
+                        
+                        # Convert to DataFrame for better display
+                        report_df = pd.DataFrame(report_dict).transpose()
+                        
+                        # Format the DataFrame
+                        report_df = report_df.round(2)
+                        
+                        # Display with better styling
+                        st.dataframe(
+                            report_df.style.format("{:.2f}", subset=['precision', 'recall', 'f1-score'])
+                                          .format("{:.0f}", subset=['support'])
+                                          .background_gradient(cmap='Blues', subset=['precision', 'recall', 'f1-score']),
+                            use_container_width=True
+                        )
                         
                         st.markdown("---")
                         
@@ -429,17 +500,55 @@ def show_combined_interface(model_manager, df):
                         
                         col1, col2 = st.columns(2)
                         
+                        # with col1:
+                        #     st.markdown("#### Confusion Matrix")
+                        #     cm = confusion_matrix(y_true, y_pred)
+                        #     fig, ax = plt.subplots(figsize=(6, 4))
+                        #     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax,
+                        #                 xticklabels=['No Churn', 'Churn'],
+                        #                 yticklabels=['No Churn', 'Churn'])
+                        #     ax.set_ylabel('True Label')
+                        #     ax.set_xlabel('Predicted Label')
+                        #     ax.set_title(f'Confusion Matrix - {model_choice}')
+                        #     st.pyplot(fig)
                         with col1:
                             st.markdown("#### Confusion Matrix")
                             cm = confusion_matrix(y_true, y_pred)
-                            fig, ax = plt.subplots(figsize=(6, 4))
+                            
+                            # Extract values for clearer display
+                            tn, fp, fn, tp = cm.ravel()
+    
+                            # Create confusion matrix with larger font for readability
+                            fig, ax = plt.subplots(figsize=(8, 6))
+                            
+                            # Use annot_kws to make annotations larger and more readable
                             sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax,
-                                        xticklabels=['No Churn', 'Churn'],
-                                        yticklabels=['No Churn', 'Churn'])
-                            ax.set_ylabel('True Label')
-                            ax.set_xlabel('Predicted Label')
-                            ax.set_title(f'Confusion Matrix - {model_choice}')
+                                        xticklabels=['No Churn (0)', 'Churn (1)'],
+                                        yticklabels=['No Churn (0)', 'Churn (1)'],
+                                        cbar_kws={'label': 'Count'},
+                                        annot_kws={'size': 16, 'weight': 'bold'},
+                                        linewidths=2, linecolor='white')
+                            
+                            ax.set_ylabel('Actual Label', fontsize=12, weight='bold')
+                            ax.set_xlabel('Predicted Label', fontsize=12, weight='bold')
+                            ax.set_title(f'Confusion Matrix - {model_choice}', fontsize=14, weight='bold', pad=20)
+                            
+                            plt.tight_layout()
                             st.pyplot(fig)
+                            
+                            # Add detailed breakdown in a nice format
+                            st.markdown("**Confusion Matrix Breakdown:**")
+                            col_a, col_b = st.columns(2)
+                            with col_a:
+                                st.metric("True Negatives (TN)", tn, 
+                                         help="Correctly predicted No Churn")
+                                st.metric("False Positives (FP)", fp, 
+                                         help="Incorrectly predicted as Churn")
+                            with col_b:
+                                st.metric("False Negatives (FN)", fn, 
+                                         help="Missed actual Churns")
+                                st.metric("True Positives (TP)", tp, 
+                                         help="Correctly predicted Churn")
                         
                         with col2:
                             st.markdown("#### Performance Metrics Bar Chart")
