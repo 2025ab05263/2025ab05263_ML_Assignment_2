@@ -1,14 +1,14 @@
 # Customer Churn Prediction - ML Assignment 2
 ---
 
-## a. Problem Statement
+## Problem Statement
 
 Customer churn refers to the situation where customers stop using a company's services. Predicting churn is important for businesses as retaining existing customers is more cost-effective than acquiring new ones.
 
 
 ---
 
-## b. Dataset Description 
+## Dataset Description 
 
 - **Dataset Name**: Customer Churn Dataset  
 - **Source**: Provided as part of the assignment  
@@ -38,7 +38,7 @@ Customer churn refers to the situation where customers stop using a company's se
 
 ---
 
-## c. Models Used 
+## Models Used 
 
 The following six machine learning classification models were implemented and evaluated using the same preprocessing pipeline:
 
@@ -72,7 +72,7 @@ The following six machine learning classification models were implemented and ev
 
 ---
 
-## d. Observations on Model Performance
+## Observations on Model Performance
 
 | ML Model Name | Observation about model performance |
 |--------------|-------------------------------------|
