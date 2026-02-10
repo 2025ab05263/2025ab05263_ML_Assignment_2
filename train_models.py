@@ -108,7 +108,8 @@ class ChurnModelTrainer:
         model = LogisticRegression(
             max_iter=1000,
             random_state=42,
-            solver='lbfgs'
+            solver='lbfgs',
+            class_weight='balanced'
         )
         model.fit(self.X_train, self.y_train)
         self.models['Logistic Regression'] = model
@@ -128,7 +129,8 @@ class ChurnModelTrainer:
             max_depth=5,
             min_samples_split=10,
             min_samples_leaf=5,
-            random_state=42
+            random_state=42,
+            class_weight='balanced'
         )
         model.fit(self.X_train, self.y_train)
         self.models['Decision Tree'] = model
@@ -187,7 +189,8 @@ class ChurnModelTrainer:
             min_samples_split=10,
             min_samples_leaf=5,
             random_state=42,
-            n_jobs=-1
+            n_jobs=-1,
+            class_weight='balanced'
         )
         model.fit(self.X_train, self.y_train)
         self.models['Random Forest'] = model
@@ -212,7 +215,8 @@ class ChurnModelTrainer:
             objective='binary:logistic',
             eval_metric='logloss',
             random_state=42,
-            use_label_encoder=False
+            use_label_encoder=False,
+            class_weight='balanced'
         )
         
         model.fit(self.X_train, self.y_train)
@@ -278,7 +282,17 @@ class ChurnModelTrainer:
             print(f"Saved {model_name} to {model_path}")
         
         print(f"\nModels saved to {output_dir}/")
+         
+        
+        # Save the scaler
+        with open(os.path.join(output_dir, 'scaler.pkl'), 'wb') as f:
+            pickle.dump(self.scaler, f)
+    
+    
+        print(f"\nModels and scaler saved to {output_dir}/")
         print(" Note: Preprocessing (scaler, label_encoders, feature_names) are handled inline in the Streamlit app")
+    
+    
 
 
 def main():
