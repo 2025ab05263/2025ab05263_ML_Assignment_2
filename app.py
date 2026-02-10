@@ -286,9 +286,16 @@ def show_combined_interface(model_manager, df):
                     st.error(f"Error reading file: {str(e)}")
         
         else:  # Load from Current Folder
-            # List CSV files in current directory
+            # List CSV files in current directory, prioritizing *_test.csv files
             import os
-            csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
+            all_csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
+            
+            # Separate test files and other files
+            test_files = [f for f in all_csv_files if f.endswith('_test.csv')]
+            other_files = [f for f in all_csv_files if not f.endswith('_test.csv')]
+            
+            # Combine with test files first
+            csv_files = test_files + other_files
             
             if csv_files:
                 selected_file = st.selectbox(
