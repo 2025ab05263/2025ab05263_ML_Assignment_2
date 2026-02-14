@@ -94,7 +94,7 @@ The following six machine learning classification models were implemented and ev
 ├── train_models.py             # Model training script
 ├── test_models.py              # Model testing script
 ├── app.py                      # Streamlit web application
-├── models/                     # Saved trained models
+├── model/                      # Saved trained models
 │   ├── logistic_regression.pkl
 │   ├── decision_tree.pkl
 │   ├── knn.pkl

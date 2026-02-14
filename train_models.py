@@ -268,7 +268,7 @@ class ChurnModelTrainer:
         print("All models trained successfully!")
         print("="*50)
     
-    def save_models(self, output_dir='models'):
+    def save_models(self, output_dir='model'):
         """Save trained models only (preprocessing done inline in app)"""
         import os
         os.makedirs(output_dir, exist_ok=True)
@@ -310,7 +310,7 @@ def main():
     trainer.train_all_models()
     
     # Save models
-    trainer.save_models('models')
+    trainer.save_models('model')
     
     print("\nTraining complete! Models are ready for deployment.")
 

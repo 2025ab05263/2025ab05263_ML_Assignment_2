@@ -153,7 +153,7 @@ class AllModels:
         'xgboost': 'XGBoost',
     }
     
-    def __init__(self, model_dir='models'):
+    def __init__(self, model_dir='model'):
         self.model_dir = model_dir
         self.models = {}
         self.preprocessor = PreprocessorPipeline()
@@ -242,7 +242,7 @@ def load_data():
 @st.cache_resource
 def load_model_manager():
     """Load the model manager with all trained models"""
-    mm = AllModels('models')
+    mm = AllModels('model')
     df = load_data()
     
     # Detect target column
