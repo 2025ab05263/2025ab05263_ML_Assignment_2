@@ -131,6 +131,28 @@ class PreprocessorPipeline:
 class AllModels:
     """Manages loading and using trained models with inline preprocessing"""
     
+    # Define the order in which models should appear in the dropdown
+    # Format: list of filenames without .pkl extension
+    MODEL_ORDER = [
+        'logistic_regression',
+        'decision_tree',
+        'knn',
+        'naive_bayes',
+        'random_forest',
+        'xgboost',
+    ]
+    
+    # Custom display names for specific models
+    # Format: 'filename_without_pkl': 'Display Name'
+    CUSTOM_MODEL_NAMES = {
+        'logistic_regression': 'Logistic Regression',
+        'decision_tree': 'Decision Tree Classifier',
+        'knn': 'K-Nearest Neighbor Classifier',
+        'naive_bayes': 'Naive Bayes Classifier - Gaussian or Multinomial',
+        'random_forest': 'Random Forest',
+        'xgboost': 'XGBoost',
+    }
+    
     def __init__(self, model_dir='models'):
         self.model_dir = model_dir
         self.models = {}
@@ -138,16 +160,46 @@ class AllModels:
         self.all_models_load()
     
     def all_models_load(self):
-        """Load all trained models"""
+        """Load all trained models in the specified order"""
         if not os.path.exists(self.model_dir):
             st.error(f"Models directory '{self.model_dir}' not found. Please train models first.")
             return False
         
         try:
-            # Load only model files
+            # Use OrderedDict to maintain insertion order (Python 3.7+ dicts are ordered by default)
+            from collections import OrderedDict
+            self.models = OrderedDict()
+            
+            # Load models in the specified order
+            for base_name in self.MODEL_ORDER:
+                filename = f"{base_name}.pkl"
+                filepath = os.path.join(self.model_dir, filename)
+                
+                if os.path.exists(filepath):
+                    # Use custom name if defined, otherwise use default title case
+                    if base_name in self.CUSTOM_MODEL_NAMES:
+                        model_name = self.CUSTOM_MODEL_NAMES[base_name]
+                    else:
+                        model_name = base_name.replace('_', ' ').title()
+                    
+                    with open(filepath, 'rb') as f:
+                        self.models[model_name] = pickle.load(f)
+            
+            # Load any additional models not in MODEL_ORDER (fallback)
             for filename in os.listdir(self.model_dir):
                 if filename.endswith('.pkl') and filename not in ['scaler.pkl', 'label_encoders.pkl', 'feature_names.pkl']:
-                    model_name = filename.replace('.pkl', '').replace('_', ' ').title()
+                    base_name = filename.replace('.pkl', '')
+                    
+                    # Skip if already loaded
+                    if base_name in self.MODEL_ORDER:
+                        continue
+                    
+                    # Use custom name if defined, otherwise use default title case
+                    if base_name in self.CUSTOM_MODEL_NAMES:
+                        model_name = self.CUSTOM_MODEL_NAMES[base_name]
+                    else:
+                        model_name = base_name.replace('_', ' ').title()
+                    
                     with open(os.path.join(self.model_dir, filename), 'rb') as f:
                         self.models[model_name] = pickle.load(f)
             
@@ -207,7 +259,7 @@ def main():
     # Header
     st.markdown("<h1 class='main-header'> Customer Churn Prediction Models</h1>", unsafe_allow_html=True)
     st.write("Interactive demonstration of multiple machine learning classification models")
-    st.write("---")
+    #st.write("---")
     
     # Initialize session state for test data
     if 'test_data' not in st.session_state:
