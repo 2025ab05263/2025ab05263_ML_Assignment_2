@@ -96,15 +96,7 @@ The following six machine learning classification models were implemented and ev
 - **Balanced Recall**: 83.54% - capturing most actual churners while maintaining precision
 - **Highest MCC**: 83.18% - indicating the most reliable performance on this imbalanced dataset
 
-### Why XGBoost Outperformed Other Models:
-
-1. **Handles Class Imbalance Effectively**: Using `scale_pos_weight=5.36` to account for the 5.36:1 imbalance ratio
-2. **Captures Complex Patterns**: Gradient boosting learns intricate feature interactions that simpler models miss
-3. **Robust to Overfitting**: Built-in regularization prevents overfitting despite model complexity
-4. **Optimal Precision-Recall Trade-off**: Achieves the best balance, crucial for business decisions where both false positives (wasted retention efforts) and false negatives (lost customers) have costs
-
-### Recommendation:
-**Deploy XGBoost for production** use in identifying at-risk customers for targeted retention campaigns. The model's high precision ensures marketing resources are focused on customers truly likely to churn, while maintaining strong recall to catch most potential churners.
+**Having deployed XGBoost will help marketing and Sales team** in identifying at-risk customers for targeted retention campaigns. The model's high precision ensures marketing resources are focused on customers truly likely to churn, while maintaining strong recall to catch most potential churners.
 
 ---
 
