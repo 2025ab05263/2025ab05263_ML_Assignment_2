@@ -13,8 +13,8 @@ Customer churn refers to the situation where customers stop using a company's se
 - **Dataset Name**: Customer Churn Dataset  
 - **Source**: Provided as part of the assignment  
 - **Total Records**: 3,150 customer records  
-- **Training Set**: 2,016 records (80%)
-- **Test Set**: 504 records (20%)
+- **Training Set**: 2,520 records (80%)
+- **Test Set**: 630 records (20%)
 - **Class Distribution**: 
   - Non-churners (Class 0): 2,655 customers (84.29%)
   - Churners (Class 1): 495 customers (15.71%)
