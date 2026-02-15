@@ -83,6 +83,29 @@ The following six machine learning classification models were implemented and ev
 | Random Forest (Ensemble) | Outstanding performance with 94.25% accuracy and exceptional AUC (97.93%). Balanced class weights enabled high recall (91.14%) - tied with Decision Tree and Naive Bayes - while maintaining good precision (76.60%). The ensemble approach handles feature interactions well and provides robust predictions with feature importance insights. |
 | XGBoost (Ensemble) | **Best overall model** with 95.63% accuracy, highest AUC (98.89%), and best balance of precision (88.00%) and recall (83.54%). The MCC of 83.18% confirms excellent performance on this imbalanced dataset. Using scale_pos_weight (5.36) effectively captures complex patterns while handling class imbalance. |
 
+
+---
+
+## Conclusion
+
+**XGBoost emerged as the best performing model** for customer churn prediction, achieving the highest overall performance across multiple evaluation metrics:
+
+- **Highest Accuracy**: 95.63% - correctly classifying the most customers
+- **Highest AUC**: 98.89% - demonstrating superior ranking ability and discrimination between churners and non-churners
+- **Best Precision**: 88.00% - minimizing false positives (incorrectly flagging loyal customers as churners)
+- **Balanced Recall**: 83.54% - capturing most actual churners while maintaining precision
+- **Highest MCC**: 83.18% - indicating the most reliable performance on this imbalanced dataset
+
+### Why XGBoost Outperformed Other Models:
+
+1. **Handles Class Imbalance Effectively**: Using `scale_pos_weight=5.36` to account for the 5.36:1 imbalance ratio
+2. **Captures Complex Patterns**: Gradient boosting learns intricate feature interactions that simpler models miss
+3. **Robust to Overfitting**: Built-in regularization prevents overfitting despite model complexity
+4. **Optimal Precision-Recall Trade-off**: Achieves the best balance, crucial for business decisions where both false positives (wasted retention efforts) and false negatives (lost customers) have costs
+
+### Recommendation:
+**Deploy XGBoost for production** use in identifying at-risk customers for targeted retention campaigns. The model's high precision ensures marketing resources are focused on customers truly likely to churn, while maintaining strong recall to catch most potential churners.
+
 ---
 
 ## Project Structure
